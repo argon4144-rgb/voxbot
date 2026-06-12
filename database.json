@@ -41,7 +41,7 @@
     },
     "admin": {
         "username": "admin",
-        "password": "admin123",
+        "password": "admin",
         "role": "admin",
         "created": "2026-06-11T14:16:38.241Z",
         "lifespanRule": "unlimited",
