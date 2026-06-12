@@ -2,7 +2,7 @@
     "11": {
         "username": "11",
         "password": "11",
-        "role": "standard",
+        "role": "admin",
         "created": "2026-06-11T14:19:14.025Z",
         "lifespanRule": "unlimited",
         "expiresAt": null
