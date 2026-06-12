@@ -1,0 +1,58 @@
+{
+    "11": {
+        "username": "11",
+        "password": "11",
+        "role": "standard",
+        "created": "2026-06-11T14:19:14.025Z",
+        "lifespanRule": "unlimited",
+        "expiresAt": null
+    },
+    "12": {
+        "username": "12",
+        "password": "12",
+        "role": "standard",
+        "created": "2026-06-11T14:22:10.259Z",
+        "lifespanRule": "lose_access",
+        "expiresAt": "2026-07-22T23:36:09.385Z"
+    },
+    "111": {
+        "username": "111",
+        "password": "111",
+        "role": "standard",
+        "created": "2026-06-11T14:22:19.699Z",
+        "lifespanRule": "unlimited",
+        "expiresAt": null
+    },
+    "123": {
+        "username": "123",
+        "password": "123",
+        "role": "standard",
+        "created": "2026-06-11T14:22:14.571Z",
+        "lifespanRule": "unlimited",
+        "expiresAt": null
+    },
+    "12123": {
+        "username": "12123",
+        "password": "12",
+        "role": "standard",
+        "created": "2026-06-11T14:22:33.611Z",
+        "lifespanRule": "unlimited",
+        "expiresAt": null
+    },
+    "admin": {
+        "username": "admin",
+        "password": "admin123",
+        "role": "admin",
+        "created": "2026-06-11T14:16:38.241Z",
+        "lifespanRule": "unlimited",
+        "expiresAt": null
+    },
+    "abc": {
+        "username": "abc",
+        "password": "abc",
+        "role": "standard",
+        "created": "2026-06-11T14:22:25.019Z",
+        "lifespanRule": "unlimited",
+        "expiresAt": null
+    }
+}

@@ -1,0 +1,1259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BOT MGR</title>
+
+
+    <style>
+        :root {
+            --bg-color: #060d13;
+            --panel-grad-1: rgba(10, 24, 38, 0.98);
+            --panel-grad-2: rgba(4, 11, 18, 0.98);
+            --text-color: #ffffff;
+            --accent-green: #00ffaa;
+            --accent-red: #ff3366;
+            --accent-orange: #ffaa00;
+            --accent-blue: #00cfff;
+            --border-color: #142534;
+            --status-muted: #415668;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; font-family: monospace, sans-serif; }
+
+        /* Custom Sleek Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(4, 11, 18, 0.98); /* Matching your --panel-grad-2 */
+            border-left: 1px solid var(--border-color);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 255, 170, 0.2); /* Matching translucent green */
+            border-radius: 4px;
+            border: 1px solid rgba(0, 255, 170, 0.4);
+            transition: all 0.2s ease;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 255, 170, 0.5); /* Brighter on hover */
+            box-shadow: 0 0 8px rgba(0, 255, 170, 0.6);
+        }
+
+        /* Firefox Support */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0, 255, 170, 0.25) rgba(4, 11, 18, 0.98);
+        }
+
+        body {
+            margin: 0; min-height: 100vh; display: flex; justify-content: center; align-items: center; overflow-x: hidden;
+            background:
+                radial-gradient(circle at top left, #00ffaa23, transparent 40%),
+                radial-gradient(circle at bottom right, #00aaff33, transparent 40%),
+                linear-gradient(135deg, #071018 0%, #0b1623 25%, #121d2b 50%, #0b1623 75%, #071018 100%);
+        }
+
+        #botManagerContainer {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            z-index: 99999; display: flex; gap: 20px; align-items: flex-start;
+            color: var(--text-color); user-select: none;
+        }
+
+        .panel {
+            width: min(92vw, 480px); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); background: rgba(10, 20, 35, 0.75);
+            border: 1px solid rgba(255,255,255,0.08); border-radius: 24px; padding: 24px;
+            box-shadow: 0 0 40px rgba(0,255,170,0.15), 0 20px 60px rgba(0,0,0,0.5); position: relative; overflow: hidden;
+            transition: width 0.3s ease;
+        }
+
+        .panel.admin-mode-active {
+            width: min(95vw, 1200px);
+        }
+
+        .panel::before {
+            content: ""; position: absolute; inset: 0; pointer-events: none;
+            background: linear-gradient(135deg, rgba(0,255,170,0.12), rgba(0,170,255,0.08));
+        }
+
+        .header { border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 15px; cursor: move; display: flex; justify-content: space-between; align-items: center; }
+        .header h2 { margin: 0; font-size: 15px; letter-spacing: 2px; text-transform: uppercase; display: flex; flex-direction: column; gap: 4px; }
+        .header h2 span { color: var(--accent-green); text-shadow: 0 0 8px rgba(0, 255, 170, 0.4); }
+        
+        .status-badge-container { display: inline-block; margin-top: 2px; }
+        .status-badge {
+            font-size: 10px; font-weight: bold; letter-spacing: 1px; padding: 4px 10px; 
+            border-radius: 6px; text-transform: uppercase; box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+            display: inline-flex; align-items: center;
+        }
+        .status-badge.role-admin {
+            background: rgba(16, 185, 129, 0.15) !important; 
+            color: #10b981 !important; 
+            border: 1px solid rgba(16, 185, 129, 0.3) !important;
+        }
+        .status-badge.role-user {
+            background: linear-gradient(135deg, #027269, #00cfff); color: #001018;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .status-badge.role-expired {
+            background: rgba(255, 51, 102, 0.15); color: var(--accent-red);
+            border: 1px solid var(--accent-red); box-shadow: inset 0 0 8px rgba(255, 51, 102, 0.2);
+        }
+        .status-badge.role-locked {
+            background: rgba(65, 86, 104, 0.2); color: var(--status-muted);
+            border: 1px solid var(--status-muted);
+        }
+
+        .toggle-btn {
+            background: rgba(0, 255, 170, 0.1); border: 1px solid var(--accent-green); color: var(--accent-green);
+            width: 26px; height: 26px; border-radius: 50%; cursor: pointer; font-size: 14px;
+            display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; box-shadow: 0 0 8px rgba(0, 255, 170, 0.3);
+        }
+        .toggle-btn:hover { background: var(--accent-green); color: #000; box-shadow: 0 0 15px var(--accent-green); }
+
+        .panel.minimized .panel-content { display: none; }
+        .panel.minimized { padding-bottom: 15px; width: 480px !important; }
+        .panel.minimized .header { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
+
+        .input-group { margin-bottom: 15px; min-width: 0; }
+        .input-group label { display: block; font-size: 11px; color: #55718a; margin-bottom: 5px; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; }
+        .input-group input, .input-group select {
+            width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+            color: white; border-radius: 12px; padding: 12px; transition: all .25s ease; outline: none; font-size: 13px;
+        }
+        .input-group input:focus, .input-group select:focus { border-color: #00ffaa; box-shadow: 0 0 0 4px rgba(0,255,170,0.15), 0 0 20px rgba(0,255,170,0.2); }
+        .input-group select option { background-color: #0b151e; color: var(--text-color); }
+
+        .dual-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+
+        .input-box-wrapper { background-color: var(--bg-color); border: 1px solid var(--border-color); padding: 8px; display: flex; flex-direction: column; align-items: center; border-radius: 12px; }
+        .input-box-wrapper input { width: 80px; background: transparent; border: none; text-align: center; font-size: 24px; font-weight: bold; outline: none; }
+        .input-box-wrapper input#botCountInput { color: var(--accent-green); }
+        .input-box-wrapper input#durationInput { color: var(--accent-orange); }
+        .input-box-wrapper .label { font-size: 10px; color: #55718a; margin-top: 5px; text-transform: uppercase; font-weight: 600; }
+
+        .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        button.action-btn { padding: 12px; font-weight: bold; cursor: pointer; border: none; text-transform: uppercase; transition: all 0.2s ease-in-out; font-size: 12px; letter-spacing: 0.5px; }
+        button.action-btn:active { transform: scale(0.96); }
+        .action-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0,0,0,0.35); }
+
+        .btn-deploy { background: linear-gradient(135deg, #00ffaa, #00cfff); color: #001018; font-weight: 700; border-radius: 12px; }
+        .btn-deploy:hover { box-shadow: 0 0 20px rgba(0, 255, 170, 0.6); }
+        .btn-kill { background: linear-gradient(135deg, #ff3366, #ff6b6b); color: white; border-radius: 12px; }
+        .btn-kill:hover { box-shadow: 0 0 20px rgba(255, 51, 102, 0.6); }
+
+        .status-container { background-color: var(--bg-color); border: 1px solid var(--border-color); border-radius: 16px; padding: 16px; margin-bottom: 15px; max-height: 220px; overflow-y: auto; }
+        .status-container .section-title { font-size: 11px; color: #55718a; text-transform: uppercase; font-weight: 600; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border-color); padding-bottom: 6px; letter-spacing: 0.5px; }
+
+        .command-list { display: flex; flex-direction: column; gap: 6px; }
+        .command-card { background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
+        .command-info span { display: block; line-height: 1.4; }
+        
+        .status-line { font-weight: bold; font-size: 10px; transition: color 0.3s ease; margin: 0; }
+        .status-line.state-spawning { color: var(--accent-orange); }
+        .status-line.state-active { color: var(--accent-green); }
+        .status-line.state-terminated { color: var(--status-muted); }
+
+        .btn-clear-single, .btn-action-danger { background: transparent; border: 1px solid var(--accent-red); color: var(--accent-red); font-size: 10px; cursor: pointer; border-radius: 6px; padding: 4px 8px; text-transform: uppercase; font-weight: 600; transition: all 0.2s; }
+        .btn-clear-single:hover, .btn-action-danger:hover { background: var(--accent-red); color: #000; }
+        .empty-indicator { text-align: center; color: #55718a; font-size: 12px; padding: 12px 0; font-style: italic; }
+
+        .console { background-color: var(--bg-color); border: 1px solid var(--border-color); height: 100px; padding: 10px; font-size: 12px; overflow-y: auto; color: #a4c5dd; white-space: pre-wrap; border-radius: 12px; }
+
+        .auth-panel, .admin-panel { display: none; }
+        .admin-nav-btn { background: transparent; border: 1px dashed var(--accent-green); color: var(--accent-green); font-size: 11px; padding: 6px 14px; font-weight: bold; cursor: pointer; border-radius: 8px; text-transform: uppercase; letter-spacing: 1px; transition: all 0.2s; }
+        .admin-nav-btn:hover { background: rgba(0, 255, 170, 0.1); box-shadow: 0 0 10px rgba(0,255,170,0.2); }
+        
+        .live-countdown-banner {
+            background: linear-gradient(90deg, rgba(0, 207, 255, 0.08), rgba(0, 255, 170, 0.04));
+            border: 1px solid rgba(0, 207, 255, 0.2); border-radius: 14px; padding: 12px 16px;
+            margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;
+        }
+        .live-countdown-banner .banner-ticker { font-size: 14px; font-weight: bold; color: var(--accent-blue); text-shadow: 0 0 8px rgba(0,207,255,0.3); }
+
+        /* Master Desk Structure Base styling rules */
+        .admin-split-dashboard { display: grid; grid-template-columns: 420px 1fr; gap: 24px; align-items: start; width: 100%; }
+        .admin-dashboard-column { display: flex; flex-direction: column; min-width: 0; width: 100%; }
+        
+        /* Inside Layout Explicit Named Selectors */
+        .matrix-sidebar { width: 100%; }
+        .control-workdesk { width: 100%; }
+
+        .search-filter-block { display: grid; grid-template-columns: 1.2fr 1fr; gap: 10px; margin-bottom: 12px; }
+        .search-filter-block input, .search-filter-block select { padding: 10px; font-size: 12px; border-radius: 10px; width: 100%; }
+        .user-list-container-height { max-height: 495px !important; }
+        .user-list { display: flex; flex-direction: column; gap: 6px; }
+        
+        .user-item { padding: 12px 14px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 10px; font-size: 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s; }
+        .user-item:hover { border-color: var(--accent-blue); background: rgba(0,207,255,0.03); }
+        .user-item.selected-user { border-color: var(--accent-green); background: rgba(0,255,170,0.05); }
+        .user-row-meta { display: block; font-size: 10px; color: #55718a; margin-top: 4px; }
+        
+        .pulse-indicator { font-weight: bold; font-size: 10px; display: inline-flex; align-items: center; gap: 4px; }
+        .pulse-indicator.active-run { color: var(--accent-green); text-shadow: 0 0 5px var(--accent-green); animation: blinker 1.5s linear infinite; }
+        .pulse-indicator.idle-run { color: var(--status-muted); }
+
+        @keyframes blinker { 50% { opacity: 0.4; } }
+
+        .admin-inspect-section-stylish {
+            background: linear-gradient(145deg, rgba(16, 32, 50, 0.4), rgba(5, 14, 24, 0.6));
+            border: 1px solid rgba(0, 255, 170, 0.15); padding: 16px; border-radius: 16px;
+        }
+        
+        .workspace-inner-title { font-size: 13px; font-weight: bold; color: var(--accent-blue); letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 15px; }
+        .compact-credentials-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 12px; width: 100%; }
+        .compact-credentials-grid .input-group input, .compact-credentials-grid .input-group select { padding: 8px 12px; font-size: 12px; border-radius: 8px; }
+
+        .lifespan-management-box { background: rgba(255, 170, 0, 0.02); border: 1px dashed rgba(255, 170, 0, 0.2); border-radius: 12px; padding: 14px; margin-bottom: 15px; width: 100%; }
+        .lifespan-layout-row { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+        .lifespan-relative-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; width: 100%; }
+        .lifespan-relative-grid input { text-align: center; }
+        .lifespan-bottom-controls-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; align-items: flex-end; }
+        .lifespan-management-box label { font-size: 10px !important; color: #a4c5dd !important; font-weight: bold; }
+        .lifespan-management-box input, .lifespan-management-box select { padding: 8px; font-size: 12px; border-radius: 6px; }
+        
+        input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+            filter: invert(65%) sepia(90%) saturate(450%) hue-rotate(120deg) brightness(100%) contrast(100%); cursor: pointer;
+        }
+        .expanded-activity-viewport { max-height: 290px !important; height: 290px; }
+
+        /* --- STACKING TRANSITION MEDIA MATRIX --- */
+       /* --- STACKING TRANSITION MEDIA MATRIX --- */
+        @media (max-width: 950px) {
+            body { align-items: flex-start; overflow-y: auto; padding: 20px 0; }
+            
+            #botManagerContainer { 
+                position: relative; 
+                top: 0; 
+                left: 0; 
+                transform: none; 
+                margin: 0 auto; 
+                width: 95vw; 
+                flex-direction: column; 
+                align-items: center; 
+            }
+            
+            .panel { width: 95vw !important; }
+
+            /* Overrides the desktop grid layout and forces stacked order */
+            .admin-grid-layout {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 20px !important;
+            }
+            
+            /* Forces main outer structure to vertical block track */
+            .admin-split-dashboard { 
+                grid-template-columns: 1fr !important; 
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 20px; 
+            }
+
+            /* Breaks inner sidebar and workdesk divs from any side-by-side positioning */
+            .matrix-sidebar, 
+            .control-workdesk { 
+                display: flex !important;
+                flex-direction: column !important;
+                width: 100% !important; 
+                float: none !important;
+            }
+            
+            .compact-credentials-grid { grid-template-columns: 1fr; gap: 10px; }
+            .lifespan-relative-grid { grid-template-columns: 1fr 1fr 1fr; }
+            .lifespan-bottom-controls-grid { grid-template-columns: 1fr; }
+            .dual-inputs, .search-filter-block { grid-template-columns: 1fr; }
+            .actions { grid-template-columns: 1fr; }
+            
+            .user-list-container-height { max-height: 300px !important; }
+            .expanded-activity-viewport { max-height: 240px !important; height: 240px; }
+        }
+
+        /* Desktop Base styling for layout configuration class */
+        .admin-grid-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 15px;
+        }
+</style>
+
+
+
+</head>
+<body>
+
+
+
+
+    <div id="botManagerContainer">
+    <div class="panel" id="managerPanel">
+        <div class="header" id="dragHeader">
+            <h2>
+                <div>VOXIOM <span>BOT MGR</span></div>
+                <div class="status-badge-container" id="globalStatusBadgeBox">
+                    <div class="status-badge role-locked">Connection Locked</div>
+                </div>
+            </h2>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <button class="admin-nav-btn" id="adminPanelToggleBtn" style="display: none;">Admin Panel</button>
+                <button class="admin-nav-btn" id="sessionLogoutBtn" style="display: none; background: #990000; color: #fff;">Logout</button>
+            </div>
+        </div>
+
+        <div class="panel-content auth-panel" id="authInterface" style="display: block;">
+            <div class="input-group">
+                <label>Terminal Username</label>
+                <input type="text" id="authUsername" value="admin">
+            </div>
+            <div class="input-group">
+                <label>Access Key / Password</label>
+                <input type="password" id="authPassword" value="admin123">
+            </div>
+            <div style="margin-top: 20px;">
+                <button class="action-btn btn-deploy" id="loginSubmitBtn" style="width: 100%;">Establish Authentication Link</button>
+            </div>
+            <div id="loginErrorMsg" style="color: var(--accent-red); font-size: 11px; text-align: center; margin-top: 10px; font-weight: bold;"></div>
+        </div>
+
+        <div id="adminInterface" style="display: none;">
+            <div class="admin-grid-layout">
+                
+                <div class="matrix-sidebar" style="background: #111; border: 1px solid #222; padding: 12px; border-radius: 4px;">
+                    <h4 style="color: var(--accent-blue); margin-bottom: 8px; font-size: 11px; letter-spacing: 1px;">DATABASE PROFILES</h4>
+                    
+                    <div style="margin-bottom: 10px; display: flex; gap: 5px;">
+                        <input type="text" id="adminUserSearchInput" placeholder="Search username..." style="flex: 1; background: #050505; border: 1px solid #333; color: #fff; padding: 5px; font-size: 11px; border-radius: 3px;">
+                        <select id="adminUserFilterSelect" style="background: #050505; border: 1px solid #333; color: #fff; padding: 5px; font-size: 11px; border-radius: 3px;">
+                            <option value="all">All Statuses</option>
+                            <option value="admin">Admins</option>
+                            <option value="user">Users</option>
+                            <option value="running">Running Only</option>
+                        </select>
+                    </div>
+
+                    <div id="adminUserListContainer" style="display: flex; flex-direction: column; gap: 8px; max-height: 380px; overflow-y: auto;">
+                    </div>
+                    
+                    <hr style="border: 0; border-top: 1px solid #222; margin: 15px 0;">
+                    
+                    <h4 style="color: #fff; margin-bottom: 8px; font-size: 11px;">CEATE NEW USER</h4>
+                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                        <input type="text" id="newUsername" placeholder="Username" style="background:#050505; border:1px solid #333; color:#fff; padding:5px; font-size:11px; border-radius:3px;">
+                        <input type="password" id="newPassword" placeholder="Password" style="background:#050505; border:1px solid #333; color:#fff; padding:5px; font-size:11px; border-radius:3px;">
+                        <select id="newUserRole" style="background:#050505; border:1px solid #333; color:#fff; padding:5px; font-size:11px; border-radius:3px;">
+                            <option value="standard">User</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                        <button id="createUserSubmitBtn" style="background: var(--accent-blue); color:#000; font-weight:bold; border:none; padding:6px; cursor:pointer; font-size:11px; border-radius:3px;">Provision Profile</button>
+                    </div>
+                </div>
+
+                <div class="control-workdesk" style="background: #111; border: 1px solid #222; padding: 15px; border-radius: 4px; display: flex; flex-direction: column; gap: 15px;">
+                    
+                    <div style="background: #050505; border-left: 3px solid var(--accent-blue); padding: 8px; font-family: monospace; font-size: 11px; color: #ccc;">
+                        <div id="lifespanStatusFeedback" style="font-weight: bold; color: #fff;">Target Account Selection: NONE Selected</div>
+                    </div>
+
+                    <div style="border: 1px solid #222; padding: 12px; border-radius: 4px; background: #111;">
+                        <h4 style="color: var(--accent-blue); margin-bottom: 10px; font-size: 11px; letter-spacing: 0.5px;">1. UPDATE BASE PROFILE INFORMATION</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                            <div>
+                                <label style="display:block; font-size:10px; color:#aaa; margin-bottom:3px;">Account Name</label>
+                                <input type="text" id="editUsernameInput" style="width:100%; background:#050505; border:1px solid #333; color:#fff; padding:6px; font-size:11px; border-radius:3px;">
+                            </div>
+                            <div>
+                                <label style="display:block; font-size:10px; color:#aaa; margin-bottom:3px;">Access Password</label>
+                                <input type="text" id="editPasswordInput" style="width:100%; background:#050505; border:1px solid #333; color:#fff; padding:6px; font-size:11px; border-radius:3px;">
+                            </div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                            <div>
+                                <label style="font-size:11px; color:#aaa; margin-right:5px;">Clearance Assignment:</label>
+                                <select id="editRoleSelect" style="background:#050505; border:1px solid #333; color:#fff; padding:4px; font-size:11px; border-radius:3px;">
+                                    <option value="standard">User</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                            </div>
+                            <div style="display: flex; gap: 6px;">
+                                <button id="rebuiltIdentitySubmitBtn" style="background: var(--accent-blue); color:#000; font-weight:bold; border:none; padding:6px 12px; font-size:11px; cursor:pointer; border-radius:3px;">Save Changes</button>
+                                <button id="deleteUserBtn" style="background: #990000; color:#fff; font-weight:bold; border:none; padding:6px 12px; font-size:11px; cursor:pointer; border-radius:3px;">Drop Account</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="border: 1px solid #222; padding: 12px; border-radius: 4px; background: #111;">
+                        <h4 style="color: var(--accent-blue); margin-bottom: 10px; font-size: 11px; letter-spacing: 0.5px;">2. TEMPORAL LEASE & LIFESPAN STRUCTURAL RULES</h4>
+                        <div style="margin-bottom: 10px;">
+                            <label style="display:block; font-size:10px; color:#aaa; margin-bottom:3px;">Lease Operational Rule Target</label>
+                            <select id="lifespanActionSelect" style="width:100%; background:#050505; border:1px solid #333; color:#fff; padding:6px; font-size:11px; border-radius:3px;">
+                                <option value="unlimited">Unlimited Access</option>
+                                <option value="lose_access">Expire</option>
+                                <option value="deleted">Delete</option>
+                            </select>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 15px;">
+                            <div>
+                                <label style="display:block; font-size:10px; color:#aaa; margin-bottom:3px;">Option A: Absolute Fixed Calendar Date/Time</label>
+                                <input type="datetime-local" id="lifespanFixedDateTimeInput" style="width:100%; background:#050505; border:1px solid #333; color:#fff; padding:5px; font-size:11px; border-radius:3px;">
+                            </div>
+                            <div>
+                                <label style="display:block; font-size:10px; color:#aaa; margin-bottom:3px;">Option B: Fixed Day Hours Minutes Seconds</label>
+                                <div style="display: flex; gap: 4px;">
+                                    <input type="number" id="lifespanDaysInput" placeholder="Days" min="0" style="width:33%; background:#050505; border:1px solid #333; color:#fff; padding:5px; font-size:10px; border-radius:3px; text-align:center;">
+                                    <input type="number" id="lifespanMinsInput" placeholder="Mins" min="0" style="width:33%; background:#050505; border:1px solid #333; color:#fff; padding:5px; font-size:10px; border-radius:3px; text-align:center;">
+                                    <input type="number" id="lifespanSecsInput" placeholder="Secs" min="0" style="width:33%; background:#050505; border:1px solid #333; color:#fff; padding:5px; font-size:10px; border-radius:3px; text-align:center;">
+                                </div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 12px; display: flex; justify-content: flex-end;">
+                            <button id="rebuiltLifespanSubmitBtn" style="background: var(--accent-blue); color:#000; font-weight:bold; border:none; padding:6px 15px; font-size:11px; cursor:pointer; border-radius:3px;">Commit Temporal Rule</button>
+                        </div>
+                    </div>
+
+                    <div id="adminActivityWrapper" style="border: 1px solid #222; padding: 12px; border-radius: 4px; background: #111;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <h4 style="color: var(--accent-blue); margin: 0; font-size: 11px; letter-spacing: 0.5px; text-transform: uppercase;">3. USER OPERATIONAL ACTIVITY</h4>
+                            <button id="clearAllActivityBtn" style="background: #990000; color: #fff; font-weight: bold; border: none; padding: 4px 10px; font-size: 10px; cursor: pointer; border-radius: 3px;">Clear All Logs</button>
+                        </div>
+                        <div id="adminActivityLogList" style="max-height: 140px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding: 2px;">
+                            <div style="font-size: 11px; color: #55718a; font-style: italic; padding: 5px;">No account row has been selected.</div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="panel-content" id="dashboardInterface" style="display: none;">
+            <div class="live-countdown-banner">
+                <span class="banner-label" style="font-size:11px; text-transform:uppercase; color:#55718a; font-weight:bold;">Session Lifespan</span>
+                <span class="banner-ticker" id="userLiveTimerHUD">Unlimited Access</span>
+            </div>
+
+            <div class="input-group">
+                <label>Server Code / URL</label>
+                <input type="text" id="serverUrl" value="t1mt0">
+            </div>
+
+            <div class="dual-inputs">
+                <div class="input-group">
+                    <label>Game Mode</label>
+                    <select id="gameModeSelect">
+                        <option value="ctg_ffa">CTG / FFA</option>
+                        <option value="battle_royal">Battle Royal</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Bot Mode</label>
+                    <select id="botModeSelect">
+                        <option value="tower_building">Tower Building</option>
+                        <option value="fixed">Fixed</option>
+                        <option value="jumping">Jumping</option>
+                        <option value="digging">Digging</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="dual-inputs">
+                <div class="input-group">
+                    <label>Primary Weapon</label>
+                    <select id="primaryWeaponSelect">
+                        <option value="01">Combat AR</option>
+                        <option value="02">Tactical AR</option>
+                        <option value="03">Surge AR</option>
+                        <option value="04">Elite AR</option>
+                        <option value="05">Burst Shotgun</option>
+                        <option value="06">LSMG</option>
+                        <option value="07">CSMG</option>
+                        <option value="08">Heavy Sniper</option>
+                        <option value="09">Light Sniper</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Secondary Weapon</label>
+                    <select id="secondaryWeaponSelect">
+                        <option value="01">Strike Pistol</option>
+                        <option value="02">Magnum Pistol</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="dual-inputs">
+                <div class="input-box-wrapper">
+                    <input type="number" id="botCountInput" value="5" min="1" max="50">
+                    <div class="label">Bots</div>
+                </div>
+                <div class="input-box-wrapper">
+                    <input type="number" id="durationInput" value="60" min="0" max="1000">
+                    <div class="label">Duration (Secs)</div>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button class="action-btn btn-deploy" id="deployBtn">Deploy</button>
+                <button class="action-btn btn-kill" id="killBtn">Kill Last</button>
+            </div>
+
+            <div class="status-container">
+                <div class="matrix-section-title section-title">
+                    <span>Active Deployments Tab</span>
+                    <span id="deviceDisplayTag" style="color:rgba(255,255,255,0.25)">UID: --</span>
+                </div>
+                <div class="command-list" id="commandListContainer">
+                    <div class="empty-indicator">No active deployment streams mapped.</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+   <script>
+// 1. BACKEND ROUTE & CURRENT SESSION REGISTER
+const BACKEND_URL = 'http://localhost:3000';
+let userDatabase = [];
+let selectedUserIndex = null;
+let adminLiveLoop = null;
+let userDashboardLoop = null;
+let countdownIntervalLoop = null; // New loop dedicated to updating the top banner countdown live
+
+// Pull authentication elements directly from LocalStorage to enforce session persistence
+let currentSessionUser = localStorage.getItem('voxiom_session_user') || "";
+let currentSessionPass = localStorage.getItem('voxiom_session_pass') || "";
+let currentSessionRole = localStorage.getItem('voxiom_session_role') || "";
+
+// 2. DOM ELEMENT REGISTRY
+const managerPanel = document.getElementById('managerPanel');
+const authInterface = document.getElementById('authInterface');
+const adminInterface = document.getElementById('adminInterface');
+const dashboardInterface = document.getElementById('dashboardInterface');
+const adminPanelToggleBtn = document.getElementById('adminPanelToggleBtn');
+const sessionLogoutBtn = document.getElementById('sessionLogoutBtn');
+const globalStatusBadgeBox = document.getElementById('globalStatusBadgeBox');
+
+// Auth Form Inputs
+const authUsernameInput = document.getElementById('authUsername');
+const authPasswordInput = document.getElementById('authPassword');
+const loginSubmitBtn = document.getElementById('loginSubmitBtn');
+const loginErrorMsg = document.getElementById('loginErrorMsg');
+
+// Admin Panel Lists & Profile Creation Elements
+const adminUserListContainer = document.getElementById('adminUserListContainer');
+const newUsernameInput = document.getElementById('newUsername');
+const newPasswordInput = document.getElementById('newPassword');
+const newUserRoleSelect = document.getElementById('newUserRole');
+const createUserSubmitBtn = document.getElementById('createUserSubmitBtn');
+
+// Identity Profile Update Form Elements
+const targetSelectionHUD = document.getElementById('lifespanStatusFeedback');
+const editUsernameInput = document.getElementById('editUsernameInput');
+const editPasswordInput = document.getElementById('editPasswordInput');
+const editRoleSelect = document.getElementById('editRoleSelect');
+const rebuiltIdentitySubmitBtn = document.getElementById('rebuiltIdentitySubmitBtn');
+const deleteUserBtn = document.getElementById('deleteUserBtn');
+
+// Lifespan UI Components
+const lifespanActionSelect = document.getElementById('lifespanActionSelect'); 
+const lifespanDaysInput = document.getElementById('lifespanDaysInput');
+const lifespanMinsInput = document.getElementById('lifespanMinsInput');
+const lifespanSecsInput = document.getElementById('lifespanSecsInput');
+const rebuiltLifespanSubmitBtn = document.getElementById('rebuiltLifespanSubmitBtn');
+const clearAllActivityBtn = document.getElementById('clearAllActivityBtn');
+const adminActivityLogList = document.getElementById('adminActivityLogList');
+
+// User Space Deployment Inputs Map
+const serverUrlInput = document.getElementById('serverUrl');
+const gameModeSelect = document.getElementById('gameModeSelect');
+const botModeSelect = document.getElementById('botModeSelect');
+const primaryWeaponSelect = document.getElementById('primaryWeaponSelect');
+const secondaryWeaponSelect = document.getElementById('secondaryWeaponSelect');
+const botCountInput = document.getElementById('botCountInput');
+const durationInput = document.getElementById('durationInput');
+const deployBtn = document.getElementById('deployBtn');
+const killBtn = document.getElementById('killBtn');
+const commandListContainer = document.getElementById('commandListContainer');
+const consoleLog = document.getElementById('consoleLog');
+const deviceDisplayTag = document.getElementById('deviceDisplayTag');
+const userLiveTimerHUD = document.getElementById('userLiveTimerHUD'); // Target for our countdown metric string banner
+
+// Minimalist Toggle Interface Element
+const toggleBtn = document.getElementById('toggleBtn');
+
+// Helper function to turn raw Weapon Codes into Human Readable Titles
+function getWeaponName(weaponCode) {
+    const code = String(weaponCode || "").trim();
+    const weaponsMap = {
+        "01": "Combat AR", 
+        "02": "Tactical AR", 
+        "03": "Surge AR", 
+        "04": "Elite AR",
+        "05": "Burst Shotgun", 
+        "06": "LSMG", 
+        "07": "CSMG", 
+        "08": "Heavy Sniper", 
+        "09": "Light Sniper"
+    };
+    return weaponsMap[code] || "Combat AR";
+}
+
+function getSecondaryName(weaponCode) {
+    const code = String(weaponCode || "").trim();
+    const weaponsMap = { 
+        "01": "Strike Pistol", 
+        "02": "Magnum Pistol" 
+    };
+    return weaponsMap[code] || "Strike Pistol";
+}
+
+// 3. ADMINISTRATIVE UI RENDERING ENGINE
+async function fetchAndRenderDatabase(isLivePoll = false) {
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/admin/accounts`, {
+            headers: {
+                'x-terminal-username': currentSessionUser,
+                'x-terminal-password': currentSessionPass
+            }
+        });
+        if (!response.ok) return;
+        userDatabase = await response.json();
+    } catch (e) { return; }
+
+    if (!adminUserListContainer) return;
+    adminUserListContainer.innerHTML = '';
+    
+    const searchQuery = document.getElementById('adminUserSearchInput') ? document.getElementById('adminUserSearchInput').value.toLowerCase().trim() : '';
+    const activeFilter = document.getElementById('adminUserFilterSelect') ? document.getElementById('adminUserFilterSelect').value : 'all';
+
+    userDatabase.forEach((user, index) => {
+        const hasActiveTasks = (user.activeSockets > 0 || (user.tasks && user.tasks.length > 0));
+        
+        if (searchQuery && !user.username.toLowerCase().includes(searchQuery)) return;
+        if (activeFilter === 'admin' && user.role !== 'admin') return;
+if (activeFilter === 'user' && user.role !== 'standard') return; // Changed 'user' to 'standard'
+if (activeFilter === 'running' && !hasActiveTasks) return;
+
+        const userItem = document.createElement('div');
+        userItem.className = `user-item ${selectedUserIndex === index ? 'selected-user' : ''}`;
+        userItem.style.padding = "10px";
+        userItem.style.background = selectedUserIndex === index ? "rgba(88, 166, 255, 0.07)" : "var(--bg-panel)";
+        userItem.style.border = "1px solid var(--border-color)";
+        userItem.style.borderRadius = "6px";
+        userItem.style.cursor = "pointer";
+        userItem.style.display = "flex";
+        userItem.style.justifyContent = "space-between";
+        userItem.style.alignItems = "center";
+        userItem.style.marginBottom = "6px";
+        
+        const roleTagHTML = user.role === 'admin' 
+            ? `<span class="status-badge role-admin" style="font-size:9px; padding:2px 6px; background:var(--accent-blue); color:#fff; border-radius:3px;">ADMIN</span>` 
+            : (user.role === 'expired' ? `<span class="status-badge" style="font-size:9px; padding:2px 6px; background:var(--accent-red); color:#fff; border-radius:3px;">LOCKED</span>` : `<span class="status-badge role-user" style="font-size:9px; padding:2px 6px; background:var(--accent-green); color:#fff; border-radius:3px;">USER</span>`);
+
+        let countdownHtml = '';
+        if (!user.expiresAt) {
+            countdownHtml = `<span style="font-size:10px; color:var(--text-muted);">UNLIMITED</span>`;
+        } else {
+            const timeLeft = new Date(user.expiresAt).getTime() - Date.now();
+            if (timeLeft > 0) {
+                const totalSecs = Math.floor(timeLeft / 1000);
+                const days = Math.floor(totalSecs / (3600 * 24));
+                const hours = Math.floor((totalSecs % (3600 * 24)) / 3600);
+                const mins = Math.floor((totalSecs % 3600) / 60);
+                const secs = totalSecs % 60;
+
+                let timeString = '';
+                if (days > 0) timeString += `${days}d `;
+                if (hours > 0 || days > 0) timeString += `${hours}h `;
+                timeString += `${mins}m ${secs}s`;
+
+                countdownHtml = `<span style="font-size:10px; color:var(--accent-orange); font-weight:bold;">${timeString} left</span>`;
+            } else {
+                countdownHtml = `<span style="font-size:10px; color:var(--accent-red); font-weight:bold;">EXPIRED</span>`;
+            }
+        }
+
+        const runningStatusHtml = hasActiveTasks 
+            ? `<span style="color:var(--accent-green); font-size:10px; margin-left: 5px; font-weight: bold; background: rgba(35,134,54,0.1); padding: 1px 4px; border-radius: 2px; border: 1px solid rgba(35,134,54,0.2);">RUNNING</span>` 
+            : '';
+
+        userItem.innerHTML = `
+            <div>
+                <strong style="color: #fff; font-size:12px;">${user.username}</strong>
+                <div style="margin-top: 2px;">${countdownHtml} ${runningStatusHtml}</div>
+            </div>
+            <div style="text-align: right;">
+                <div>${roleTagHTML}</div>
+                <span style="font-size:9px; color:var(--text-muted); display:block; margin-top:4px;">Pass: ${user.password}</span>
+            </div>
+        `;
+
+        userItem.addEventListener('click', () => { selectUserProfile(index); });
+        adminUserListContainer.appendChild(userItem);
+    });
+
+    if (selectedUserIndex !== null) {
+        const activeTarget = userDatabase[selectedUserIndex];
+        if (activeTarget) {
+            targetSelectionHUD.innerText = `Target Account Selection: [ ${activeTarget.username.toUpperCase()} ]`;
+            if (!isLivePoll || document.activeElement !== editUsernameInput) editUsernameInput.value = activeTarget.username;
+            if (!isLivePoll || document.activeElement !== editPasswordInput) editPasswordInput.value = activeTarget.password;
+            if (!isLivePoll || document.activeElement !== editRoleSelect) editRoleSelect.value = activeTarget.role;
+            if (lifespanActionSelect && !isLivePoll) lifespanActionSelect.value = activeTarget.lifespanRule;
+            
+            if (adminActivityLogList) {
+                if (!activeTarget.tasks || activeTarget.tasks.length === 0) {
+                    adminActivityLogList.innerHTML = `<div style="font-size: 11px; color: var(--text-muted); font-style: italic; padding: 5px;">No active deployment running for this user profile.</div>`;
+                } else {
+                    adminActivityLogList.innerHTML = '';
+                    activeTarget.tasks.forEach((t, i) => {
+                        const rawId = t.taskId || "";
+                        const serverDisplayId = rawId.includes('-') ? rawId.split('-')[0] : rawId;
+                        const bots = t.botCount || t.activeSockets || 0;
+                        
+                        const mode = t.gameModeSelect || t.gameMode || 'CTG / FFA';
+                        const behavior = t.botMode || t.mode || 'fixed';
+                        const w1 = getWeaponName(t.primaryWeapon || t.weapon1);
+                        const w2 = getSecondaryName(t.secondaryWeapon || t.weapon2);
+
+                        let timeAdded = '';
+                        if (rawId.includes('-')) {
+                            const timestamp = parseInt(rawId.split('-')[1], 10);
+                            if (!isNaN(timestamp)) {
+                                timeAdded = ` @ ${new Date(timestamp).toLocaleTimeString()}`;
+                            }
+                        }
+
+                        const taskRow = document.createElement('div');
+                        taskRow.style = "background:var(--bg-input); padding:8px; border-radius:6px; border:1px solid var(--border-color); font-size:11px; margin-bottom: 6px;";
+                        taskRow.innerHTML = `
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span style="color:var(--accent-blue); font-weight:bold;">[Stream #${i+1}] Server: <b style="color:#fff;">${serverDisplayId}</b><span style="color:#55718a; font-size:10px;">${timeAdded}</span></span>
+                                <button onclick="terminateAdminTargetTask('${activeTarget.username}', '${t.taskId}')" class="danger-btn" style="padding:2px 6px; font-size:9px; border-radius:4px; width:auto;">Drop</button>
+                            </div>
+                            <div style="color:var(--text-muted); margin-top:4px; line-height:14px; font-size:10px;">
+                                Total Bots: <b style="color:var(--accent-green)">${bots}</b> | Match Mode: <b style="color:var(--accent-orange)">${mode}</b> | Strategy: <b style="color:#fff">${behavior}</b><br>
+                                Loadout Blueprint: <span style="color:#eee;">Primary: ${w1} | Secondary: ${w2}</span>
+                            </div>
+                        `;
+                        adminActivityLogList.appendChild(taskRow);
+                    });
+                }
+            }
+        } else {
+            selectUserProfile(null);
+        }
+    }
+}
+
+function selectUserProfile(index) {
+    selectedUserIndex = (index === null || !userDatabase[index]) ? null : index;
+    if (selectedUserIndex === null) {
+        targetSelectionHUD.innerText = "Target Account Selection: NONE Selected";
+        editUsernameInput.value = ''; editPasswordInput.value = '';
+        if(adminActivityLogList) adminActivityLogList.innerHTML = `<div style="font-size: 11px; color: var(--text-muted); font-style: italic; padding: 5px;">No account row has been selected to pull activity trace matrix channels.</div>`;
+    }
+    fetchAndRenderDatabase(false);
+}
+
+function startAdminLiveMonitoring() {
+    if (adminLiveLoop) clearInterval(adminLiveLoop);
+    adminLiveLoop = setInterval(() => { fetchAndRenderDatabase(true); }, 1000);
+}
+
+// 4. OPERATOR LIVE SYNCHRONIZATION RUNTIME
+async function syncUserDashboardActivity() {
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/tasks`, {
+            headers: {
+                'x-terminal-username': currentSessionUser,
+                'x-terminal-password': currentSessionPass
+            }
+        });
+        if (!response.ok) return;
+        const tasks = await response.json();
+        
+        if (!commandListContainer) return;
+        if (!tasks || tasks.length === 0) {
+            commandListContainer.innerHTML = `<div class="empty-indicator" style="color:var(--text-muted); font-style:italic; font-size:11px;">No active deployment streams mapped.</div>`;
+            return;
+        }
+
+        commandListContainer.innerHTML = '';
+        tasks.forEach((task, index) => {
+            const rawId = task.taskId || "";
+            const serverDisplayId = rawId.includes('-') ? rawId.split('-')[0] : rawId;
+            
+            const currentMode = task.gameModeSelect || task.gameMode || 'CTG / FFA';
+            const currentBotMode = task.botMode || task.mode || 'fixed';
+            const primaryWep = getWeaponName(task.primaryWeapon || task.weapon1);
+            const secondaryWep = getSecondaryName(task.secondaryWeapon || task.weapon2);
+
+            let timeAdded = '';
+            if (rawId.includes('-')) {
+                const timestamp = parseInt(rawId.split('-')[1], 10);
+                if (!isNaN(timestamp)) {
+                    timeAdded = ` at ${new Date(timestamp).toLocaleTimeString()}`;
+                }
+            }
+
+            const row = document.createElement('div');
+            row.className = "command-item";
+            row.style = "background: var(--bg-panel); border: 1px solid var(--border-color); padding: 8px 12px; margin-bottom: 6px; border-radius: 6px; font-size: 11px;";
+            row.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border-color); padding-bottom: 4px; margin-bottom: 4px;">
+                    <div>
+                        <span style="color: var(--accent-blue); font-weight: bold;">[Stream #${index + 1}] Target: <b style="color:#fff">${serverDisplayId}</b><span style="color: #55718a; font-size:10px;">${timeAdded}</span></span>
+                    </div>
+                    <button onclick="terminateDashboardTask('${task.taskId}')" class="danger-btn" style="padding: 2px 8px; font-size: 10px; border-radius: 4px; width:auto; font-weight:bold;">Clear</button>
+                </div>
+                <div style="color: var(--text-muted); font-size: 10px; line-height: 14px;">
+                    Bots: <b style="color:var(--accent-green)">${task.botCount}</b> | Match Mode: <b style="color:var(--accent-orange)">${currentMode}</b> | Bot Mode: <b style="color:#9e9e9e">${currentBotMode}</b><br>
+                    Loadout: <span style="color:#fff">Pri: ${primaryWep} / Sec: ${secondaryWep}</span>
+                </div>
+            `;
+            commandListContainer.appendChild(row);
+        });
+    } catch(e) {}
+}
+
+async function initializeUserSessionCountdown() {
+    if (countdownIntervalLoop) clearInterval(countdownIntervalLoop);
+    
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/admin/accounts`, {
+            headers: {
+                'x-terminal-username': currentSessionUser,
+                'x-terminal-password': currentSessionPass
+            }
+        });
+        if (!response.ok) {
+            if(userLiveTimerHUD) userLiveTimerHUD.innerText = "Linked Connection Established";
+            return;
+        }
+        
+        const accountsList = await response.json();
+        const activeProfile = accountsList.find(u => u.username.toLowerCase() === currentSessionUser.toLowerCase());
+        
+        if (!activeProfile || !activeProfile.expiresAt) {
+            if(userLiveTimerHUD) userLiveTimerHUD.innerText = "Unlimited Access";
+            return;
+        }
+
+        const targetTimestamp = new Date(activeProfile.expiresAt).getTime();
+
+        countdownIntervalLoop = setInterval(() => {
+            const timeDiff = targetTimestamp - Date.now();
+            if (timeDiff <= 0) {
+                if(userLiveTimerHUD) userLiveTimerHUD.innerText = "SESSION EXPIRED";
+                clearInterval(countdownIntervalLoop);
+                if(sessionLogoutBtn) sessionLogoutBtn.click();
+                return;
+            }
+
+            const totalSeconds = Math.floor(timeDiff / 1000);
+            const days = Math.floor(totalSeconds / (3600 * 24));
+            const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+
+            let tickerDisplay = '';
+            if (days > 0) tickerDisplay += `${days}d `;
+            if (hours > 0 || days > 0) tickerDisplay += `${hours}h `;
+            tickerDisplay += `${minutes}m ${seconds}s`;
+
+            if(userLiveTimerHUD) {
+                userLiveTimerHUD.innerText = tickerDisplay;
+                userLiveTimerHUD.style.color = "var(--accent-orange)";
+                userLiveTimerHUD.style.fontWeight = "bold";
+            }
+        }, 1000);
+
+    } catch (err) {
+        if(userLiveTimerHUD) userLiveTimerHUD.innerText = "Active Connection Stream";
+    }
+}
+
+function startUserLiveMonitoring() {
+    if (userDashboardLoop) clearInterval(userDashboardLoop);
+    syncUserDashboardActivity();
+    initializeUserSessionCountdown();
+    userDashboardLoop = setInterval(syncUserDashboardActivity, 1500);
+}
+
+// 5. SESSION MANAGEMENT CONTROL ROUTINES
+function applyInterfaceLayout(role) {
+    authInterface.style.display = "none";
+    sessionLogoutBtn.style.display = "inline-block";
+    if(deviceDisplayTag) deviceDisplayTag.innerText = `UID: ${currentSessionUser.toUpperCase()}`;
+    
+    if (role === 'admin') {
+        managerPanel.classList.add('admin-mode-active');
+        adminInterface.style.display = "block";
+        adminPanelToggleBtn.style.display = "inline-block";
+        globalStatusBadgeBox.innerHTML = `<div class="status-badge role-admin" style="background:var(--accent-blue); color:#fff; padding:2px 8px; border-radius:3px; font-size:10px;">Root Admin Connected</div>`;
+        
+        setTimeout(() => {
+            const searchInput = document.getElementById('adminUserSearchInput');
+            const filterSelect = document.getElementById('adminUserFilterSelect');
+            if(searchInput && !searchInput.dataset.listening) {
+                searchInput.dataset.listening = "true";
+                searchInput.addEventListener('input', () => fetchAndRenderDatabase(true));
+            }
+            if(filterSelect && !filterSelect.dataset.listening) {
+                filterSelect.dataset.listening = "true";
+                filterSelect.addEventListener('change', () => fetchAndRenderDatabase(true));
+            }
+        }, 50);
+
+        fetchAndRenderDatabase(false);
+        startAdminLiveMonitoring();
+    } else {
+        dashboardInterface.style.display = "block";
+        adminPanelToggleBtn.style.display = "none";
+        globalStatusBadgeBox.innerHTML = `<div class="status-badge role-user" style="background:var(--accent-green); color:#fff; padding:2px 8px; border-radius:3px; font-size:10px;">Operator Stream Linked</div>`;
+        startUserLiveMonitoring();
+    }
+}
+
+sessionLogoutBtn.addEventListener('click', () => {
+    localStorage.removeItem('voxiom_session_user');
+    localStorage.removeItem('voxiom_session_pass');
+    localStorage.removeItem('voxiom_session_role');
+    
+    currentSessionUser = ""; currentSessionPass = ""; currentSessionRole = "";
+    if (adminLiveLoop) clearInterval(adminLiveLoop);
+    if (userDashboardLoop) clearInterval(userDashboardLoop);
+    if (countdownIntervalLoop) clearInterval(countdownIntervalLoop);
+    
+    adminInterface.style.display = "none";
+    dashboardInterface.style.display = "none";
+    adminPanelToggleBtn.style.display = "none";
+    sessionLogoutBtn.style.display = "none";
+    managerPanel.classList.remove('admin-mode-active');
+    
+    globalStatusBadgeBox.innerHTML = `<div class="status-badge role-locked">Connection Locked</div>`;
+    authInterface.style.display = "block";
+});
+
+if (currentSessionUser && currentSessionPass && currentSessionRole) {
+    applyInterfaceLayout(currentSessionRole);
+}
+
+loginSubmitBtn.addEventListener('click', async () => {
+    const username = authUsernameInput.value.trim();
+    const password = authPasswordInput.value.trim();
+    
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        const data = await response.json();
+
+        if (data.status !== "success") {
+            loginErrorMsg.innerText = data.message;
+            return;
+        }
+        
+        currentSessionUser = username;
+        currentSessionPass = password;
+        currentSessionRole = data.role;
+        
+        localStorage.setItem('voxiom_session_user', currentSessionUser);
+        localStorage.setItem('voxiom_session_pass', currentSessionPass);
+        localStorage.setItem('voxiom_session_role', currentSessionRole);
+        
+        loginErrorMsg.innerText = "";
+        applyInterfaceLayout(currentSessionRole);
+    } catch(e) {
+        loginErrorMsg.innerText = "CRITICAL: Engine interface link module failure.";
+    }
+});
+
+createUserSubmitBtn.addEventListener('click', async () => {
+    const newUsername = newUsernameInput.value.trim();
+    const newPassword = newPasswordInput.value.trim();
+    const newRole = newUserRoleSelect.value;
+
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/admin/create-user`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'x-terminal-username': currentSessionUser,
+                'x-terminal-password': currentSessionPass
+            },
+            body: JSON.stringify({ newUsername, newPassword, newRole })
+        });
+        const data = await response.json();
+        alert(data.message);
+
+        if (data.status === "success") {
+            newUsernameInput.value = ''; newPasswordInput.value = '';
+            fetchAndRenderDatabase(false);
+        }
+    } catch (e) { alert("Communication link timeout."); }
+});
+
+rebuiltIdentitySubmitBtn.addEventListener('click', async () => {
+    if (selectedUserIndex === null) return alert("Halt: Select a row entry first.");
+
+    const targetUsername = userDatabase[selectedUserIndex].username;
+    const newUsername = editUsernameInput.value.trim();
+    const newPassword = editPasswordInput.value.trim();
+    const role = editRoleSelect.value;
+
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/admin/update-user`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'x-terminal-username': currentSessionUser,
+                'x-terminal-password': currentSessionPass
+            },
+            body: JSON.stringify({ actionType: 'identity_patch', targetUsername, newUsername, newPassword, role })
+        });
+        const data = await response.json();
+        alert(data.message);
+        if (data.status === "success") fetchAndRenderDatabase(false);
+    } catch(e) { alert("Error changing identity configurations."); }
+});
+
+if (rebuiltLifespanSubmitBtn) {
+    rebuiltLifespanSubmitBtn.addEventListener('click', async () => {
+        if (selectedUserIndex === null) return alert("Halt: Select a target profile row entry.");
+
+        const targetUsername = userDatabase[selectedUserIndex].username;
+        const lifespanRule = lifespanActionSelect ? lifespanActionSelect.value : 'unlimited';
+        const days = lifespanDaysInput ? lifespanDaysInput.value : 0;
+        const mins = lifespanMinsInput ? lifespanMinsInput.value : 0;
+        const secs = lifespanSecsInput ? lifespanSecsInput.value : 0;
+
+        try {
+            const response = await fetch(`${BACKEND_URL}/api/admin/update-user`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'x-terminal-username': currentSessionUser,
+                    'x-terminal-password': currentSessionPass
+                },
+                body: JSON.stringify({ actionType: 'lifespan_patch', targetUsername, lifespanRule, days, mins, secs })
+            });
+            const data = await response.json();
+            alert(data.message);
+            if (data.status === "success") {
+                if (lifespanDaysInput) lifespanDaysInput.value = '';
+                if (lifespanMinsInput) lifespanMinsInput.value = '';
+                if (lifespanSecsInput) lifespanSecsInput.value = '';
+                fetchAndRenderDatabase(false);
+            }
+        } catch(e) { alert("Lease route channel process modification error."); }
+    });
+}
+
+deleteUserBtn.addEventListener('click', async () => {
+    if (selectedUserIndex === null) return alert("Select an entry to drop.");
+    const targetUsername = userDatabase[selectedUserIndex].username;
+    
+    if (confirm(`Purge entry for ${targetUsername}?`)) {
+        try {
+            const response = await fetch(`${BACKEND_URL}/api/admin/delete-user`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'x-terminal-username': currentSessionUser,
+                    'x-terminal-password': currentSessionPass
+                },
+                body: JSON.stringify({ targetUsername })
+            });
+            const data = await response.json();
+            alert(data.message);
+            if (data.status === "success") selectUserProfile(null);
+        } catch(e) { alert("Drop processing error occurred."); }
+    }
+});
+
+if (clearAllActivityBtn) {
+    clearAllActivityBtn.addEventListener('click', async () => {
+        if (selectedUserIndex === null) return alert("Select a database profile context first.");
+        const targetUsername = userDatabase[selectedUserIndex].username;
+        if (confirm(`Wipe all matrix activities and connections for user: ${targetUsername}?`)) {
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/admin/clear-user-activity`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-terminal-username': currentSessionUser,
+                        'x-terminal-password': currentSessionPass
+                    },
+                    body: JSON.stringify({ targetUsername })
+                });
+                const data = await response.json();
+                alert(data.message);
+                fetchAndRenderDatabase(false);
+            } catch(e) { alert("Failed to clear activity traces."); }
+        }
+    });
+}
+
+// --- STANDARD USER BOT PIPELINE LOGIC LINKAGES ---
+async function deployBotPipeline(payload) {
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/deploy`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'x-terminal-username': currentSessionUser,
+                'x-terminal-password': currentSessionPass
+            },
+            body: JSON.stringify({
+                taskId: payload.taskId,
+                serverUrl: payload.serverUrl,
+                botCount: payload.botCount,
+                durationSec: payload.durationSec,
+                gameModeSelect: payload.gameModeSelect,
+                botMode: payload.botMode,
+                primaryWeapon: payload.primaryWeapon,
+                secondaryWeapon: payload.secondaryWeapon
+            })
+        });
+        return await response.json();
+    } catch(e) { 
+        if(consoleLog) consoleLog.innerText = "[SYSTEM ERROR] Pipeline initialization failed.";
+    }
+}
+
+async function stopBotPipeline(taskId) {
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/clear/${taskId}`, {
+            method: 'POST',
+            headers: {
+                'x-terminal-username': currentSessionUser,
+                'x-terminal-password': currentSessionPass
+            }
+        });
+        return await response.json();
+    } catch(e) { console.error("Pipeline termination dropped out."); }
+}
+
+deployBtn.addEventListener('click', async () => {
+    const rawServerCode = serverUrlInput.value.trim();
+    if (!rawServerCode) return alert("Validation Failed: Server Code cannot be empty.");
+
+    const distinctTaskId = `${rawServerCode}-${Date.now()}`;
+
+    const payload = {
+        taskId: distinctTaskId, 
+        serverUrl: `wss://game-server-${rawServerCode}.voxiom.io`, 
+        botCount: parseInt(botCountInput.value, 10) || 5,
+        durationSec: parseFloat(durationInput.value, 10) || 60,
+        gameModeSelect: gameModeSelect.value,
+        botMode: botModeSelect.value,
+        primaryWeapon: primaryWeaponSelect.value,
+        secondaryWeapon: secondaryWeaponSelect.value
+    };
+
+    if (consoleLog) consoleLog.innerText = `[SYSTEM] Deploying stream matrix into server ${rawServerCode}...`;
+
+    const res = await deployBotPipeline(payload);
+    if (res && res.status === "success") {
+        if(consoleLog) consoleLog.innerText = `[SYSTEM] ${res.message}`;
+        syncUserDashboardActivity();
+    } else {
+        if(consoleLog) consoleLog.innerText = `[SYSTEM ERROR] Matrix deployment rejected.`;
+    }
+});
+
+killBtn.addEventListener('click', async () => {
+    try {
+        if (consoleLog) consoleLog.innerText = `[SYSTEM] Dropping last active thread...`;
+        const response = await fetch(`${BACKEND_URL}/api/kill-last`, {
+            method: 'POST',
+            headers: {
+                'x-terminal-username': currentSessionUser,
+                'x-terminal-password': currentSessionPass
+            }
+        });
+        const data = await response.json();
+        if (consoleLog) consoleLog.innerText = `[SYSTEM] ${data.message}`;
+        syncUserDashboardActivity();
+    } catch(e) { alert("Matrix drop route failed."); }
+});
+
+async function terminateDashboardTask(taskId) {
+    if(consoleLog) consoleLog.innerText = `[SYSTEM] Terminating task thread: ${taskId}`;
+    const res = await stopBotPipeline(taskId);
+    if(res) syncUserDashboardActivity();
+}
+
+async function terminateAdminTargetTask(targetUsername, taskId) {
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/admin/clear-specific-task`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-terminal-username': currentSessionUser,
+                'x-terminal-password': currentSessionPass
+            },
+            body: JSON.stringify({ targetUsername, taskId })
+        });
+        const data = await response.json();
+        alert(data.message);
+        fetchAndRenderDatabase(true);
+    } catch(e) { alert("Error dropping selected task pipeline."); }
+}
+
+adminPanelToggleBtn.addEventListener('click', () => {
+    if (adminInterface.style.display === "block") {
+        adminInterface.style.display = "none";
+        dashboardInterface.style.display = "block";
+        adminPanelToggleBtn.innerText = "Admin Panel";
+        managerPanel.classList.remove('admin-mode-active');
+        if (adminLiveLoop) clearInterval(adminLiveLoop);
+        startUserLiveMonitoring();
+    } else {
+        dashboardInterface.style.display = "none";
+        adminInterface.style.display = "block";
+        adminPanelToggleBtn.innerText = "Operator Dashboard";
+        managerPanel.classList.add('admin-mode-active');
+        if (userDashboardLoop) clearInterval(userDashboardLoop);
+        if (countdownIntervalLoop) clearInterval(countdownIntervalLoop);
+        
+        setTimeout(() => {
+            const searchInput = document.getElementById('adminUserSearchInput');
+            const filterSelect = document.getElementById('adminUserFilterSelect');
+            if(searchInput && !searchInput.dataset.listening) {
+                searchInput.dataset.listening = "true";
+                searchInput.addEventListener('input', () => fetchAndRenderDatabase(true));
+            }
+            if(filterSelect && !filterSelect.dataset.listening) {
+                filterSelect.dataset.listening = "true";
+                filterSelect.addEventListener('change', () => fetchAndRenderDatabase(true));
+            }
+        }, 50);
+
+        fetchAndRenderDatabase(false);
+        startAdminLiveMonitoring();
+    }
+});
+
+toggleBtn.addEventListener('click', () => {
+    managerPanel.classList.toggle('minimized');
+    toggleBtn.innerText = managerPanel.classList.contains('minimized') ? '＋' : '−';
+});
+</script>
+
+
+    
+</body>
+</html>
