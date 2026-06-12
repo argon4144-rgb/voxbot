@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BOT MGR</title>
 
-
     <style>
         :root {
             --bg-color: #060d13;
@@ -29,19 +28,19 @@
         }
 
         ::-webkit-scrollbar-track {
-            background: rgba(4, 11, 18, 0.98); /* Matching your --panel-grad-2 */
+            background: rgba(4, 11, 18, 0.98); 
             border-left: 1px solid var(--border-color);
         }
 
         ::-webkit-scrollbar-thumb {
-            background: rgba(0, 255, 170, 0.2); /* Matching translucent green */
+            background: rgba(0, 255, 170, 0.2); 
             border-radius: 4px;
             border: 1px solid rgba(0, 255, 170, 0.4);
             transition: all 0.2s ease;
         }
 
         ::-webkit-scrollbar-thumb:hover {
-            background: rgba(0, 255, 170, 0.5); /* Brighter on hover */
+            background: rgba(0, 255, 170, 0.5); 
             box-shadow: 0 0 8px rgba(0, 255, 170, 0.6);
         }
 
@@ -69,7 +68,7 @@
             width: min(92vw, 480px); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); background: rgba(10, 20, 35, 0.75);
             border: 1px solid rgba(255,255,255,0.08); border-radius: 24px; padding: 24px;
             box-shadow: 0 0 40px rgba(0,255,170,0.15), 0 20px 60px rgba(0,0,0,0.5); position: relative; overflow: hidden;
-            transition: width 0.3s ease;
+            transition: width 0.3s ease, padding 0.3s ease;
         }
 
         .panel.admin-mode-active {
@@ -116,7 +115,7 @@
         }
         .toggle-btn:hover { background: var(--accent-green); color: #000; box-shadow: 0 0 15px var(--accent-green); }
 
-        .panel.minimized .panel-content { display: none; }
+        .panel.minimized .panel-content, .panel.minimized #adminInterface { display: none !important; }
         .panel.minimized { padding-bottom: 15px; width: 480px !important; }
         .panel.minimized .header { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
 
@@ -152,18 +151,8 @@
 
         .command-list { display: flex; flex-direction: column; gap: 6px; }
         .command-card { background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
-        .command-info span { display: block; line-height: 1.4; }
         
-        .status-line { font-weight: bold; font-size: 10px; transition: color 0.3s ease; margin: 0; }
-        .status-line.state-spawning { color: var(--accent-orange); }
-        .status-line.state-active { color: var(--accent-green); }
-        .status-line.state-terminated { color: var(--status-muted); }
-
-        .btn-clear-single, .btn-action-danger { background: transparent; border: 1px solid var(--accent-red); color: var(--accent-red); font-size: 10px; cursor: pointer; border-radius: 6px; padding: 4px 8px; text-transform: uppercase; font-weight: 600; transition: all 0.2s; }
-        .btn-clear-single:hover, .btn-action-danger:hover { background: var(--accent-red); color: #000; }
-        .empty-indicator { text-align: center; color: #55718a; font-size: 12px; padding: 12px 0; font-style: italic; }
-
-        .console { background-color: var(--bg-color); border: 1px solid var(--border-color); height: 100px; padding: 10px; font-size: 12px; overflow-y: auto; color: #a4c5dd; white-space: pre-wrap; border-radius: 12px; }
+        .console { background-color: var(--bg-color); border: 1px solid var(--border-color); height: 90px; padding: 12px; font-size: 11px; overflow-y: auto; color: #a4c5dd; white-space: pre-wrap; border-radius: 12px; margin-bottom: 15px; font-family: monospace; }
 
         .auth-panel, .admin-panel { display: none; }
         .admin-nav-btn { background: transparent; border: 1px dashed var(--accent-green); color: var(--accent-green); font-size: 11px; padding: 6px 14px; font-weight: bold; cursor: pointer; border-radius: 8px; text-transform: uppercase; letter-spacing: 1px; transition: all 0.2s; }
@@ -178,7 +167,6 @@
 
         /* Master Desk Structure Base styling rules */
         .admin-split-dashboard { display: grid; grid-template-columns: 420px 1fr; gap: 24px; align-items: start; width: 100%; }
-        .admin-dashboard-column { display: flex; flex-direction: column; min-width: 0; width: 100%; }
         
         /* Inside Layout Explicit Named Selectors */
         .matrix-sidebar { width: 100%; }
@@ -187,43 +175,16 @@
         .search-filter-block { display: grid; grid-template-columns: 1.2fr 1fr; gap: 10px; margin-bottom: 12px; }
         .search-filter-block input, .search-filter-block select { padding: 10px; font-size: 12px; border-radius: 10px; width: 100%; }
         .user-list-container-height { max-height: 495px !important; }
-        .user-list { display: flex; flex-direction: column; gap: 6px; }
         
         .user-item { padding: 12px 14px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 10px; font-size: 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s; }
         .user-item:hover { border-color: var(--accent-blue); background: rgba(0,207,255,0.03); }
         .user-item.selected-user { border-color: var(--accent-green); background: rgba(0,255,170,0.05); }
-        .user-row-meta { display: block; font-size: 10px; color: #55718a; margin-top: 4px; }
-        
-        .pulse-indicator { font-weight: bold; font-size: 10px; display: inline-flex; align-items: center; gap: 4px; }
-        .pulse-indicator.active-run { color: var(--accent-green); text-shadow: 0 0 5px var(--accent-green); animation: blinker 1.5s linear infinite; }
-        .pulse-indicator.idle-run { color: var(--status-muted); }
-
-        @keyframes blinker { 50% { opacity: 0.4; } }
-
-        .admin-inspect-section-stylish {
-            background: linear-gradient(145deg, rgba(16, 32, 50, 0.4), rgba(5, 14, 24, 0.6));
-            border: 1px solid rgba(0, 255, 170, 0.15); padding: 16px; border-radius: 16px;
-        }
-        
-        .workspace-inner-title { font-size: 13px; font-weight: bold; color: var(--accent-blue); letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 15px; }
-        .compact-credentials-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 12px; width: 100%; }
-        .compact-credentials-grid .input-group input, .compact-credentials-grid .input-group select { padding: 8px 12px; font-size: 12px; border-radius: 8px; }
-
-        .lifespan-management-box { background: rgba(255, 170, 0, 0.02); border: 1px dashed rgba(255, 170, 0, 0.2); border-radius: 12px; padding: 14px; margin-bottom: 15px; width: 100%; }
-        .lifespan-layout-row { display: flex; flex-direction: column; gap: 12px; width: 100%; }
-        .lifespan-relative-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; width: 100%; }
-        .lifespan-relative-grid input { text-align: center; }
-        .lifespan-bottom-controls-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; align-items: flex-end; }
-        .lifespan-management-box label { font-size: 10px !important; color: #a4c5dd !important; font-weight: bold; }
-        .lifespan-management-box input, .lifespan-management-box select { padding: 8px; font-size: 12px; border-radius: 6px; }
         
         input[type="datetime-local"]::-webkit-calendar-picker-indicator {
             filter: invert(65%) sepia(90%) saturate(450%) hue-rotate(120deg) brightness(100%) contrast(100%); cursor: pointer;
         }
-        .expanded-activity-viewport { max-height: 290px !important; height: 290px; }
 
         /* --- STACKING TRANSITION MEDIA MATRIX --- */
-       /* --- STACKING TRANSITION MEDIA MATRIX --- */
         @media (max-width: 950px) {
             body { align-items: flex-start; overflow-y: auto; padding: 20px 0; }
             
@@ -240,14 +201,12 @@
             
             .panel { width: 95vw !important; }
 
-            /* Overrides the desktop grid layout and forces stacked order */
             .admin-grid-layout {
                 display: flex !important;
                 flex-direction: column !important;
                 gap: 20px !important;
             }
             
-            /* Forces main outer structure to vertical block track */
             .admin-split-dashboard { 
                 grid-template-columns: 1fr !important; 
                 display: flex !important;
@@ -255,7 +214,6 @@
                 gap: 20px; 
             }
 
-            /* Breaks inner sidebar and workdesk divs from any side-by-side positioning */
             .matrix-sidebar, 
             .control-workdesk { 
                 display: flex !important;
@@ -269,26 +227,27 @@
             .lifespan-bottom-controls-grid { grid-template-columns: 1fr; }
             .dual-inputs, .search-filter-block { grid-template-columns: 1fr; }
             .actions { grid-template-columns: 1fr; }
-            
-            .user-list-container-height { max-height: 300px !important; }
-            .expanded-activity-viewport { max-height: 240px !important; height: 240px; }
         }
 
-        /* Desktop Base styling for layout configuration class */
         .admin-grid-layout {
             display: grid;
             grid-template-columns: 280px 1fr;
             gap: 15px;
         }
-</style>
-
-
-
+        
+        .danger-btn {
+            background: var(--accent-red);
+            color: #fff;
+            border: none;
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+    </style>
 </head>
 <body>
-
-
-
 
     <div id="botManagerContainer">
     <div class="panel" id="managerPanel">
@@ -302,17 +261,18 @@
             <div style="display: flex; align-items: center; gap: 12px;">
                 <button class="admin-nav-btn" id="adminPanelToggleBtn" style="display: none;">Admin Panel</button>
                 <button class="admin-nav-btn" id="sessionLogoutBtn" style="display: none; background: #990000; color: #fff;">Logout</button>
+                <button class="toggle-btn" id="toggleBtn">−</button>
             </div>
         </div>
 
         <div class="panel-content auth-panel" id="authInterface" style="display: block;">
             <div class="input-group">
                 <label>Terminal Username</label>
-                <input type="text" id="authUsername" value="admin">
+                <input type="text" id="authUsername">
             </div>
             <div class="input-group">
                 <label>Access Key / Password</label>
-                <input type="password" id="authPassword" value="admin123">
+                <input type="password" id="authPassword">
             </div>
             <div style="margin-top: 20px;">
                 <button class="action-btn btn-deploy" id="loginSubmitBtn" style="width: 100%;">Establish Authentication Link</button>
@@ -341,7 +301,7 @@
                     
                     <hr style="border: 0; border-top: 1px solid #222; margin: 15px 0;">
                     
-                    <h4 style="color: #fff; margin-bottom: 8px; font-size: 11px;">CEATE NEW USER</h4>
+                    <h4 style="color: #fff; margin-bottom: 8px; font-size: 11px;">CREATE NEW USER</h4>
                     <div style="display: flex; flex-direction: column; gap: 6px;">
                         <input type="text" id="newUsername" placeholder="Username" style="background:#050505; border:1px solid #333; color:#fff; padding:5px; font-size:11px; border-radius:3px;">
                         <input type="password" id="newPassword" placeholder="Password" style="background:#050505; border:1px solid #333; color:#fff; padding:5px; font-size:11px; border-radius:3px;">
@@ -430,14 +390,10 @@
         </div>
 
         <div class="panel-content" id="dashboardInterface" style="display: none;">
-            <div class="live-countdown-banner">
-                <span class="banner-label" style="font-size:11px; text-transform:uppercase; color:#55718a; font-weight:bold;">Session Lifespan</span>
-                <span class="banner-ticker" id="userLiveTimerHUD">Unlimited Access</span>
-            </div>
 
             <div class="input-group">
                 <label>Server Code / URL</label>
-                <input type="text" id="serverUrl" value="t1mt0">
+                <input type="text" id="serverUrl" value="xqpvt">
             </div>
 
             <div class="dual-inputs">
@@ -485,11 +441,11 @@
 
             <div class="dual-inputs">
                 <div class="input-box-wrapper">
-                    <input type="number" id="botCountInput" value="5" min="1" max="50">
+                    <input type="number" id="botCountInput" value="19" min="1">
                     <div class="label">Bots</div>
                 </div>
                 <div class="input-box-wrapper">
-                    <input type="number" id="durationInput" value="60" min="0" max="1000">
+                    <input type="number" id="durationInput" value="20" min="0">
                     <div class="label">Duration (Secs)</div>
                 </div>
             </div>
@@ -498,6 +454,7 @@
                 <button class="action-btn btn-deploy" id="deployBtn">Deploy</button>
                 <button class="action-btn btn-kill" id="killBtn">Kill Last</button>
             </div>
+
 
             <div class="status-container">
                 <div class="matrix-section-title section-title">
@@ -513,26 +470,18 @@
     </div>
 </div>
 
-
-
-
-
-
-   <script>
-// 1. BACKEND ROUTE & CURRENT SESSION REGISTER
-const BACKEND_URL = 'http://localhost:3000';
+<script>
+const BACKEND_URL = 'https://vox-bot-0i0e.onrender.com';
 let userDatabase = [];
 let selectedUserIndex = null;
 let adminLiveLoop = null;
 let userDashboardLoop = null;
-let countdownIntervalLoop = null; // New loop dedicated to updating the top banner countdown live
+let countdownIntervalLoop = null; 
 
-// Pull authentication elements directly from LocalStorage to enforce session persistence
 let currentSessionUser = localStorage.getItem('voxiom_session_user') || "";
 let currentSessionPass = localStorage.getItem('voxiom_session_pass') || "";
 let currentSessionRole = localStorage.getItem('voxiom_session_role') || "";
 
-// 2. DOM ELEMENT REGISTRY
 const managerPanel = document.getElementById('managerPanel');
 const authInterface = document.getElementById('authInterface');
 const adminInterface = document.getElementById('adminInterface');
@@ -541,28 +490,24 @@ const adminPanelToggleBtn = document.getElementById('adminPanelToggleBtn');
 const sessionLogoutBtn = document.getElementById('sessionLogoutBtn');
 const globalStatusBadgeBox = document.getElementById('globalStatusBadgeBox');
 
-// Auth Form Inputs
 const authUsernameInput = document.getElementById('authUsername');
 const authPasswordInput = document.getElementById('authPassword');
 const loginSubmitBtn = document.getElementById('loginSubmitBtn');
 const loginErrorMsg = document.getElementById('loginErrorMsg');
 
-// Admin Panel Lists & Profile Creation Elements
 const adminUserListContainer = document.getElementById('adminUserListContainer');
 const newUsernameInput = document.getElementById('newUsername');
 const newPasswordInput = document.getElementById('newPassword');
 const newUserRoleSelect = document.getElementById('newUserRole');
 const createUserSubmitBtn = document.getElementById('createUserSubmitBtn');
 
-// Identity Profile Update Form Elements
-const targetSelectionHUD = document.getElementById('lifespanStatusFeedback');
+const lifespanStatusFeedback = document.getElementById('lifespanStatusFeedback');
 const editUsernameInput = document.getElementById('editUsernameInput');
 const editPasswordInput = document.getElementById('editPasswordInput');
 const editRoleSelect = document.getElementById('editRoleSelect');
 const rebuiltIdentitySubmitBtn = document.getElementById('rebuiltIdentitySubmitBtn');
 const deleteUserBtn = document.getElementById('deleteUserBtn');
 
-// Lifespan UI Components
 const lifespanActionSelect = document.getElementById('lifespanActionSelect'); 
 const lifespanDaysInput = document.getElementById('lifespanDaysInput');
 const lifespanMinsInput = document.getElementById('lifespanMinsInput');
@@ -571,7 +516,6 @@ const rebuiltLifespanSubmitBtn = document.getElementById('rebuiltLifespanSubmitB
 const clearAllActivityBtn = document.getElementById('clearAllActivityBtn');
 const adminActivityLogList = document.getElementById('adminActivityLogList');
 
-// User Space Deployment Inputs Map
 const serverUrlInput = document.getElementById('serverUrl');
 const gameModeSelect = document.getElementById('gameModeSelect');
 const botModeSelect = document.getElementById('botModeSelect');
@@ -584,38 +528,25 @@ const killBtn = document.getElementById('killBtn');
 const commandListContainer = document.getElementById('commandListContainer');
 const consoleLog = document.getElementById('consoleLog');
 const deviceDisplayTag = document.getElementById('deviceDisplayTag');
-const userLiveTimerHUD = document.getElementById('userLiveTimerHUD'); // Target for our countdown metric string banner
+const userLiveTimerHUD = document.getElementById('userLiveTimerHUD'); 
 
-// Minimalist Toggle Interface Element
 const toggleBtn = document.getElementById('toggleBtn');
 
-// Helper function to turn raw Weapon Codes into Human Readable Titles
 function getWeaponName(weaponCode) {
     const code = String(weaponCode || "").trim();
     const weaponsMap = {
-        "01": "Combat AR", 
-        "02": "Tactical AR", 
-        "03": "Surge AR", 
-        "04": "Elite AR",
-        "05": "Burst Shotgun", 
-        "06": "LSMG", 
-        "07": "CSMG", 
-        "08": "Heavy Sniper", 
-        "09": "Light Sniper"
+        "01": "Combat AR", "02": "Tactical AR", "03": "Surge AR", "04": "Elite AR",
+        "05": "Burst Shotgun", "06": "LSMG", "07": "CSMG", "08": "Heavy Sniper", "09": "Light Sniper"
     };
     return weaponsMap[code] || "Combat AR";
 }
 
 function getSecondaryName(weaponCode) {
     const code = String(weaponCode || "").trim();
-    const weaponsMap = { 
-        "01": "Strike Pistol", 
-        "02": "Magnum Pistol" 
-    };
+    const weaponsMap = { "01": "Strike Pistol", "02": "Magnum Pistol" };
     return weaponsMap[code] || "Strike Pistol";
 }
 
-// 3. ADMINISTRATIVE UI RENDERING ENGINE
 async function fetchAndRenderDatabase(isLivePoll = false) {
     try {
         const response = await fetch(`${BACKEND_URL}/api/admin/accounts`, {
@@ -639,8 +570,8 @@ async function fetchAndRenderDatabase(isLivePoll = false) {
         
         if (searchQuery && !user.username.toLowerCase().includes(searchQuery)) return;
         if (activeFilter === 'admin' && user.role !== 'admin') return;
-if (activeFilter === 'user' && user.role !== 'standard') return; // Changed 'user' to 'standard'
-if (activeFilter === 'running' && !hasActiveTasks) return;
+        if (activeFilter === 'user' && user.role !== 'standard') return; 
+        if (activeFilter === 'running' && !hasActiveTasks) return;
 
         const userItem = document.createElement('div');
         userItem.className = `user-item ${selectedUserIndex === index ? 'selected-user' : ''}`;
@@ -703,11 +634,11 @@ if (activeFilter === 'running' && !hasActiveTasks) return;
     if (selectedUserIndex !== null) {
         const activeTarget = userDatabase[selectedUserIndex];
         if (activeTarget) {
-            targetSelectionHUD.innerText = `Target Account Selection: [ ${activeTarget.username.toUpperCase()} ]`;
+            if (lifespanStatusFeedback) lifespanStatusFeedback.innerText = `Target Account Selection: [ ${activeTarget.username.toUpperCase()} ]`;
             if (!isLivePoll || document.activeElement !== editUsernameInput) editUsernameInput.value = activeTarget.username;
             if (!isLivePoll || document.activeElement !== editPasswordInput) editPasswordInput.value = activeTarget.password;
             if (!isLivePoll || document.activeElement !== editRoleSelect) editRoleSelect.value = activeTarget.role;
-            if (lifespanActionSelect && !isLivePoll) lifespanActionSelect.value = activeTarget.lifespanRule;
+            if (lifespanActionSelect && !isLivePoll) lifespanActionSelect.value = activeTarget.lifespanRule || 'unlimited';
             
             if (adminActivityLogList) {
                 if (!activeTarget.tasks || activeTarget.tasks.length === 0) {
@@ -733,7 +664,7 @@ if (activeFilter === 'running' && !hasActiveTasks) return;
                         }
 
                         const taskRow = document.createElement('div');
-                        taskRow.style = "background:var(--bg-input); padding:8px; border-radius:6px; border:1px solid var(--border-color); font-size:11px; margin-bottom: 6px;";
+                        taskRow.style = "background:rgba(255,255,255,0.02); padding:8px; border-radius:6px; border:1px solid var(--border-color); font-size:11px; margin-bottom: 6px;";
                         taskRow.innerHTML = `
                             <div style="display:flex; justify-content:space-between; align-items:center;">
                                 <span style="color:var(--accent-blue); font-weight:bold;">[Stream #${i+1}] Server: <b style="color:#fff;">${serverDisplayId}</b><span style="color:#55718a; font-size:10px;">${timeAdded}</span></span>
@@ -757,7 +688,7 @@ if (activeFilter === 'running' && !hasActiveTasks) return;
 function selectUserProfile(index) {
     selectedUserIndex = (index === null || !userDatabase[index]) ? null : index;
     if (selectedUserIndex === null) {
-        targetSelectionHUD.innerText = "Target Account Selection: NONE Selected";
+        if (lifespanStatusFeedback) lifespanStatusFeedback.innerText = "Target Account Selection: NONE Selected";
         editUsernameInput.value = ''; editPasswordInput.value = '';
         if(adminActivityLogList) adminActivityLogList.innerHTML = `<div style="font-size: 11px; color: var(--text-muted); font-style: italic; padding: 5px;">No account row has been selected to pull activity trace matrix channels.</div>`;
     }
@@ -769,7 +700,6 @@ function startAdminLiveMonitoring() {
     adminLiveLoop = setInterval(() => { fetchAndRenderDatabase(true); }, 1000);
 }
 
-// 4. OPERATOR LIVE SYNCHRONIZATION RUNTIME
 async function syncUserDashboardActivity() {
     try {
         const response = await fetch(`${BACKEND_URL}/api/tasks`, {
@@ -807,7 +737,7 @@ async function syncUserDashboardActivity() {
 
             const row = document.createElement('div');
             row.className = "command-item";
-            row.style = "background: var(--bg-panel); border: 1px solid var(--border-color); padding: 8px 12px; margin-bottom: 6px; border-radius: 6px; font-size: 11px;";
+            row.style = "background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); padding: 8px 12px; margin-bottom: 6px; border-radius: 6px; font-size: 11px;";
             row.innerHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border-color); padding-bottom: 4px; margin-bottom: 4px;">
                     <div>
@@ -889,7 +819,6 @@ function startUserLiveMonitoring() {
     userDashboardLoop = setInterval(syncUserDashboardActivity, 1500);
 }
 
-// 5. SESSION MANAGEMENT CONTROL ROUTINES
 function applyInterfaceLayout(role) {
     authInterface.style.display = "none";
     sessionLogoutBtn.style.display = "inline-block";
@@ -928,6 +857,7 @@ sessionLogoutBtn.addEventListener('click', () => {
     localStorage.removeItem('voxiom_session_user');
     localStorage.removeItem('voxiom_session_pass');
     localStorage.removeItem('voxiom_session_role');
+    localStorage.removeItem('voxiom_session_expires');
     
     currentSessionUser = ""; currentSessionPass = ""; currentSessionRole = "";
     if (adminLiveLoop) clearInterval(adminLiveLoop);
@@ -972,6 +902,15 @@ loginSubmitBtn.addEventListener('click', async () => {
         localStorage.setItem('voxiom_session_user', currentSessionUser);
         localStorage.setItem('voxiom_session_pass', currentSessionPass);
         localStorage.setItem('voxiom_session_role', currentSessionRole);
+        
+        // --- FIXED CRITICAL ERROR: Save the expiration field to LocalStorage upon successful authentication ---
+        if (data.expiresAt) {
+            localStorage.setItem('voxiom_session_expires', data.expiresAt);
+        } else if (data.user && data.user.expiresAt) {
+            localStorage.setItem('voxiom_session_expires', data.user.expiresAt);
+        } else {
+            localStorage.removeItem('voxiom_session_expires');
+        }
         
         loginErrorMsg.innerText = "";
         applyInterfaceLayout(currentSessionRole);
@@ -1106,7 +1045,6 @@ if (clearAllActivityBtn) {
     });
 }
 
-// --- STANDARD USER BOT PIPELINE LOGIC LINKAGES ---
 async function deployBotPipeline(payload) {
     try {
         const response = await fetch(`${BACKEND_URL}/api/deploy`, {
@@ -1156,7 +1094,7 @@ deployBtn.addEventListener('click', async () => {
         taskId: distinctTaskId, 
         serverUrl: `wss://game-server-${rawServerCode}.voxiom.io`, 
         botCount: parseInt(botCountInput.value, 10) || 5,
-        durationSec: parseFloat(durationInput.value, 10) || 60,
+        durationSec: parseFloat(durationInput.value) || 60,
         gameModeSelect: gameModeSelect.value,
         botMode: botModeSelect.value,
         primaryWeapon: primaryWeaponSelect.value,
@@ -1247,13 +1185,12 @@ adminPanelToggleBtn.addEventListener('click', () => {
     }
 });
 
-toggleBtn.addEventListener('click', () => {
-    managerPanel.classList.toggle('minimized');
-    toggleBtn.innerText = managerPanel.classList.contains('minimized') ? '＋' : '−';
-});
+if (toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+        managerPanel.classList.toggle('minimized');
+        toggleBtn.innerText = managerPanel.classList.contains('minimized') ? '＋' : '−';
+    });
+}
 </script>
-
-
-    
 </body>
 </html>
