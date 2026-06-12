@@ -9,13 +9,7 @@ const app = express();
 // FIX #1: Bind to Render's dynamic system environment variable
 const PORT = process.env.PORT || 3000;
 
-// FIX #2: Updated CORS to accept custom authorization headers from your HTML file
-app.use(cors({
-    origin: '*', 
-    methods: ['GET', 'POST'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-terminal-username', 'x-terminal-password']
-}));
-
+app.use(cors());
 app.use(express.json());
 
 // --- DATABASE FILE PERSISTENCE CONFIGURATION ---
@@ -650,5 +644,33 @@ app.post('/api/kill', (req, res) => {
     res.json({ message: `All instances registered to user ${username} dropped.` });
 });
 
-// Use the dynamically assigned port variable
-app.listen(PORT, () => { console.log(`Backend context running on port ${PORT}`); });
+// FIX #1: Use the dynamically assigned port variable
+// --- KEEP-ALIVE SYSTEM ROUTE ---
+app.get('/ping', (req, res) => {
+    res.status(200).send('Keep-Alive: Active');
+});
+
+// NEW LISTEN BLOCK WITH AUTOMATIC BACKGROUND HEARTBEAT
+app.listen(PORT, () => { 
+    console.log(`Backend context running on port ${PORT}`); 
+    
+    // Render automatically injects your exact live URL here when deployed
+    const RENDER_EXTERNAL_URL = process.env.RENDER_EXTERNAL_URL; 
+    
+    if (RENDER_EXTERNAL_URL) {
+        const https = require('https');
+        const PING_INTERVAL_MS = 11 * 60 * 1000; // Pings every 11 minutes (beats the 15-minute timeout)
+        
+        console.log(`[SYSTEM] Initializing 24/7 background heartbeat sequence. Target: ${RENDER_EXTERNAL_URL}/ping`);
+        
+        setInterval(() => {
+            https.get(`${RENDER_EXTERNAL_URL}/ping`, (res) => {
+                console.log(`[HEARTBEAT] Ping status: ${res.statusCode} - Server kept awake.`);
+            }).on('error', (err) => {
+                console.error('[HEARTBEAT ERROR] Self-ping failed:', err.message);
+            });
+        }, PING_INTERVAL_MS);
+    } else {
+        console.log("[SYSTEM] Local development environment detected. Heartbeat loop resting.");
+    }
+});
