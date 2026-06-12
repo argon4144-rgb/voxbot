@@ -9,7 +9,13 @@ const app = express();
 // FIX #1: Bind to Render's dynamic system environment variable
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+// FIX #2: Updated CORS to accept custom authorization headers from your HTML file
+app.use(cors({
+    origin: '*', 
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-terminal-username', 'x-terminal-password']
+}));
+
 app.use(express.json());
 
 // --- DATABASE FILE PERSISTENCE CONFIGURATION ---
@@ -644,5 +650,5 @@ app.post('/api/kill', (req, res) => {
     res.json({ message: `All instances registered to user ${username} dropped.` });
 });
 
-// FIX #1: Use the dynamically assigned port variable
+// Use the dynamically assigned port variable
 app.listen(PORT, () => { console.log(`Backend context running on port ${PORT}`); });
